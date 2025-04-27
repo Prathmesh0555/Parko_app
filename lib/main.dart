@@ -692,7 +692,7 @@ class ParkingSpotCard extends StatelessWidget {
                   Row(
                     children: [
                       const Icon(
-                        Icons.local_parking,
+                        Icons.directions_car_filled,
                         size: 14,
                         color: Colors.grey,
                       ),
