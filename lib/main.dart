@@ -35,7 +35,7 @@ class ParkoHomePage extends StatefulWidget {
   const ParkoHomePage({super.key});
 
   @override
-  State createState() => _ParkoHomePageState();
+  State<ParkoHomePage> createState() => _ParkoHomePageState();
 }
 
 class _ParkoHomePageState extends State<ParkoHomePage> {
@@ -47,14 +47,28 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
   List<ParkingSpot> _allParkingSpots = [];
   int _displayLimit = 3;
   String _locationName = "Fetching location...";
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     _initializeLocationAndFetchParkingSpots();
   }
 
-  Future _initializeLocationAndFetchParkingSpots() async {
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _parkingSpots = _allParkingSpots
+          .where((spot) => spot.parkingUser.parkingName
+          .toLowerCase()
+          .contains(query))
+          .take(_displayLimit)
+          .toList();
+    });
+  }
+
+  Future<void> _initializeLocationAndFetchParkingSpots() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -89,7 +103,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
     }
   }
 
-  Future _reverseGeocodeLocation() async {
+  Future<void> _reverseGeocodeLocation() async {
     try {
       if (_userPosition != null) {
         List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(
@@ -113,7 +127,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
     }
   }
 
-  Future _fetchNearbyParkingSpots() async {
+  Future<void> _fetchNearbyParkingSpots() async {
     if (_userPosition == null) return;
     try {
       final response = await AuthService.protectedApiCall(() async {
@@ -264,6 +278,12 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
         ),
       ),
     ];
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -438,8 +458,9 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        child: const TextField(
-                          decoration: InputDecoration(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: const InputDecoration(
                             icon: Icon(Icons.search),
                             hintText: 'Search for parking spots...',
                             border: InputBorder.none,
