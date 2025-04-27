@@ -166,6 +166,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
           fare: _totalFare,
           startTime: _startTime!,
           endTime: _endTime!,
+          parkingAreaId: widget.parkingSpot['id'], // Add this parameter
         ),
       ),
     ).then((selectedSpot) {
