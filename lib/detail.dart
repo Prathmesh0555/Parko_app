@@ -87,16 +87,14 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
     TimeOfDay initialTime;
 
     if (_startTime == null) {
-      // If no start time selected, default to current time + 2 hours
       final now = TimeOfDay.now();
       initialTime = TimeOfDay(
-        hour: (now.hour + 2) % 24,  // Ensure hour stays within 0-23
+        hour: (now.hour + 2) % 24,
         minute: now.minute,
       );
     } else {
-      // If start time is selected, use it + 2 hours
       initialTime = TimeOfDay(
-        hour: (_startTime!.hour + 2) % 24,  // Ensure hour stays within 0-23
+        hour: (_startTime!.hour + 2) % 24,
         minute: _startTime!.minute,
       );
     }
@@ -116,10 +114,8 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
 
   void _calculateFare() {
     if (_startTime != null && _endTime != null) {
-      // Ensure end time is after start time
       if (_endTime!.hour < _startTime!.hour ||
           (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
-        // If end time is before start time, add 24 hours to end time
         final duration = ((_endTime!.hour + 24) - _startTime!.hour) +
             (_endTime!.minute - _startTime!.minute) / 60;
         setState(() {
@@ -147,7 +143,6 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
       return;
     }
 
-    // Ensure end time is after start time
     if (_endTime!.hour < _startTime!.hour ||
         (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -322,20 +317,73 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                       color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.threed_rotation, color: Colors.deepPurple),
-                      label: const Text(
-                        'View 3D Model',
-                        style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                  const SizedBox(height: 24),
+
+// Available Types Section
+                  const Text(
+                    'Available Types',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: (parkingUser['availableTypes']?.toString().split(',') ?? [])
+                        .map<Widget>((type) => Chip( // Explicit type casting here
+                      label: Text(type.trim()),
+                      backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                      labelStyle: const TextStyle(color: Colors.deepPurple),
+                    ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Pricing Section
+                  const Text(
+                    'Pricing',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Table(
+                    columnWidths: const {
+                      0: FlexColumnWidth(2),
+                      1: FlexColumnWidth(1),
+                    },
+                    children: [
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text('Hourly Rate'),
+                          ),
+                          Text('₹${parkingUser['hourlyRate'] ?? 'N/A'}'),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text('Daily Rate'),
+                          ),
+                          Text('₹${parkingUser['dailyRate'] ?? 'N/A'}'),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text('Monthly Rate'),
+                          ),
+                          Text('₹${parkingUser['monthlyRate'] ?? 'N/A'}'),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -530,6 +578,38 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+            // Contact Information Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Contact Information',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildContactRow(Icons.phone, parkingUser['phone'] ?? 'N/A'),
+                      _buildContactRow(Icons.email, parkingUser['email'] ?? 'N/A'),
+                      _buildContactRow(Icons.language, parkingUser['website'] ?? 'N/A'),
+                      _buildContactRow(Icons.business, parkingUser['company'] ?? 'N/A'),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -777,6 +857,24 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildContactRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.deepPurple),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
       ),
     );
   }
