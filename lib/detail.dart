@@ -88,14 +88,12 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
     TimeOfDay initialTime;
 
     if (_startTime == null) {
-      // If no start time selected, default to current time + 2 hours
       final now = TimeOfDay.now();
       initialTime = TimeOfDay(
         hour: (now.hour + 2) % 24, // Ensure hour stays within 0-23
         minute: now.minute,
       );
     } else {
-      // If start time is selected, use it + 2 hours
       initialTime = TimeOfDay(
         hour: (_startTime!.hour + 2) % 24, // Ensure hour stays within 0-23
         minute: _startTime!.minute,
@@ -117,7 +115,6 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
 
   void _calculateFare() {
     if (_startTime != null && _endTime != null) {
-      // Ensure end time is after start time
       if (_endTime!.hour < _startTime!.hour ||
           (_endTime!.hour == _startTime!.hour &&
               _endTime!.minute <= _startTime!.minute)) {
@@ -151,7 +148,6 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
       return;
     }
 
-    // Ensure end time is after start time
     if (_endTime!.hour < _startTime!.hour ||
         (_endTime!.hour == _startTime!.hour &&
             _endTime!.minute <= _startTime!.minute)) {
@@ -671,6 +667,38 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+            // Contact Information Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Contact Information',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildContactRow(Icons.phone, parkingUser['phone'] ?? 'N/A'),
+                      _buildContactRow(Icons.email, parkingUser['email'] ?? 'N/A'),
+                      _buildContactRow(Icons.language, parkingUser['website'] ?? 'N/A'),
+                      _buildContactRow(Icons.business, parkingUser['company'] ?? 'N/A'),
+                    ],
+                  ),
                 ),
               ),
             ),
