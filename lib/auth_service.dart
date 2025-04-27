@@ -10,7 +10,7 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  static const String baseUrl = 'https://real-pleasantly-grizzly.ngrok-free.app';
+  static const String baseUrl = 'https://plainly-modern-escargot.ngrok-free.app';
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   // Storage key
