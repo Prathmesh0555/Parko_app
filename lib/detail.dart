@@ -84,10 +84,28 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
   }
 
   Future<void> _selectEndTime() async {
+    TimeOfDay initialTime;
+
+    if (_startTime == null) {
+      // If no start time selected, default to current time + 2 hours
+      final now = TimeOfDay.now();
+      initialTime = TimeOfDay(
+        hour: (now.hour + 2) % 24,  // Ensure hour stays within 0-23
+        minute: now.minute,
+      );
+    } else {
+      // If start time is selected, use it + 2 hours
+      initialTime = TimeOfDay(
+        hour: (_startTime!.hour + 2) % 24,  // Ensure hour stays within 0-23
+        minute: _startTime!.minute,
+      );
+    }
+
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _endTime ?? (_startTime ?? TimeOfDay.now()).replacing(hour: (_startTime?.hour ?? 0) + 2),
+      initialTime: _endTime ?? initialTime,
     );
+
     if (picked != null && picked != _endTime) {
       setState(() {
         _endTime = picked;
@@ -98,12 +116,22 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
 
   void _calculateFare() {
     if (_startTime != null && _endTime != null) {
-      final duration = (_endTime!.hour - _startTime!.hour) +
-          (_endTime!.minute - _startTime!.minute) / 60;
-      // ₹100 per hour as dummy fare calculation
-      setState(() {
-        _totalFare = (duration * 100).roundToDouble();
-      });
+      // Ensure end time is after start time
+      if (_endTime!.hour < _startTime!.hour ||
+          (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
+        // If end time is before start time, add 24 hours to end time
+        final duration = ((_endTime!.hour + 24) - _startTime!.hour) +
+            (_endTime!.minute - _startTime!.minute) / 60;
+        setState(() {
+          _totalFare = (duration * 100).roundToDouble();
+        });
+      } else {
+        final duration = (_endTime!.hour - _startTime!.hour) +
+            (_endTime!.minute - _startTime!.minute) / 60;
+        setState(() {
+          _totalFare = (duration * 100).roundToDouble();
+        });
+      }
     } else {
       setState(() {
         _totalFare = 0.0;
@@ -119,12 +147,21 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
       return;
     }
 
+    // Ensure end time is after start time
+    if (_endTime!.hour < _startTime!.hour ||
+        (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('End time must be after start time')),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ParkingLotAvailabilityPage(
           selectedDate: '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-          parkingSpotName: widget.parkingSpot['name'],
+          parkingSpotName: widget.parkingSpot['parking_user']['parking_name'],
           initialSelectedSpot: selectedSlot,
           fare: _totalFare,
           startTime: _startTime!,
@@ -140,6 +177,8 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final parkingUser = widget.parkingSpot['parking_user'];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -161,9 +200,9 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Parko',
-              style: TextStyle(
+            Text(
+              parkingUser['parking_name'],
+              style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
@@ -201,7 +240,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
               width: double.infinity,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage(widget.parkingSpot['image']),
+                  image: NetworkImage(parkingUser['image_url']),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -214,7 +253,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.parkingSpot['name'],
+                    parkingUser['parking_name'],
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -225,14 +264,14 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                     children: [
                       const Icon(Icons.star, color: Colors.amber, size: 20),
                       Text(
-                        ' ${widget.parkingSpot['rating']} (${widget.parkingSpot['reviewCount']} reviews)',
+                        ' ${parkingUser['rating']} (${widget.parkingSpot['available_slots']} slots)',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    widget.parkingSpot['address'],
+                    parkingUser['address'] ?? 'No address provided',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -245,12 +284,12 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                       _buildInfoCard(
                         icon: Icons.access_time,
                         title: 'Opening Hours',
-                        value: widget.parkingSpot['openingHours'],
+                        value: parkingUser['openingHours'] ?? 'N/A',
                       ),
                       _buildInfoCard(
-                        icon: Icons.security,
-                        title: 'Security',
-                        value: widget.parkingSpot['security'],
+                        icon: Icons.local_parking,
+                        title: 'Vehicle Types',
+                        value: parkingUser['availableTypes'] ?? 'N/A',
                       ),
                     ],
                   ),
@@ -277,7 +316,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    widget.parkingSpot['description'],
+                    parkingUser['description'] ?? 'No description provided.',
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
