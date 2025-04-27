@@ -116,6 +116,9 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
 
   void _calculateFare() {
     if (_startTime != null && _endTime != null) {
+      // Get the hourly rate from the parking spot data
+      final hourlyRate = widget.parkingSpot['parking_user']['hourlyRate'] as double;
+      
       // Ensure end time is after start time
       if (_endTime!.hour < _startTime!.hour ||
           (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
@@ -123,13 +126,13 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
         final duration = ((_endTime!.hour + 24) - _startTime!.hour) +
             (_endTime!.minute - _startTime!.minute) / 60;
         setState(() {
-          _totalFare = (duration * 100).roundToDouble();
+          _totalFare = (duration * hourlyRate).roundToDouble();
         });
       } else {
         final duration = (_endTime!.hour - _startTime!.hour) +
             (_endTime!.minute - _startTime!.minute) / 60;
         setState(() {
-          _totalFare = (duration * 100).roundToDouble();
+          _totalFare = (duration * hourlyRate).roundToDouble();
         });
       }
     } else {

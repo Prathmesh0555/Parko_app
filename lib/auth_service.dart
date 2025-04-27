@@ -144,6 +144,7 @@ class AuthService {
       });
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print('hi $data');
         return BookingResponse.fromJson(data);
       } else {
         throw Exception('fail hogya: ${response.statusCode}');

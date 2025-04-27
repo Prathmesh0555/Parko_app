@@ -2,10 +2,7 @@ class BookingResponse {
   final int count;
   final List<Booking> bookings;
 
-  BookingResponse({
-    required this.count,
-    required this.bookings,
-  });
+  BookingResponse({required this.count, required this.bookings});
 
   factory BookingResponse.fromJson(Map<String, dynamic> json) {
     return BookingResponse(
@@ -22,20 +19,20 @@ class Booking {
   final int slot;
   final String reqTimeStart;
   final String reqTimeEnd;
-  final BookingUser user;
-  final String? qrCode;
   final String status;
-  final String? phoneNumber;
+  final String? qrCode;
+  final BookingUser user;
+  final String? parkingName;
 
   Booking({
     required this.id,
     required this.slot,
     required this.reqTimeStart,
     required this.reqTimeEnd,
-    required this.user,
-    this.qrCode,
     required this.status,
-    this.phoneNumber,
+    this.qrCode,
+    required this.user,
+    this.parkingName,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
@@ -44,10 +41,10 @@ class Booking {
       slot: json['slot'],
       reqTimeStart: json['req_time_start'],
       reqTimeEnd: json['req_time_end'],
-      user: BookingUser.fromJson(json['user']),
-      qrCode: json['qr_code'],
       status: json['status'],
-      phoneNumber: json['phone_number'],
+      qrCode: json['qr_code'],
+      user: BookingUser.fromJson(json['user']),
+      parkingName: json['parking_name'] ?? '',
     );
   }
 }
