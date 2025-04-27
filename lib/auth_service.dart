@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'models/booking_model.dart';
+import 'models/parking_models.dart';  
 
 class AuthService {
   // Singleton instance
@@ -10,7 +12,7 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  static const String baseUrl = 'https://real-pleasantly-grizzly.ngrok-free.app';
+  static const String baseUrl = 'https://plainly-modern-escargot.ngrok-free.app';
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   // Storage key
@@ -129,6 +131,68 @@ class AuthService {
     } catch (e) {
       debugPrint('Registration error: $e');
       return false;
+    }
+  }
+
+  static Future<BookingResponse> fetchMyBookings() async {
+    try {
+      final response = await protectedApiCall(() async {
+        return await http.get(
+          Uri.parse('$baseUrl/reservation/booking/my-bookings/'),
+          headers: await getAuthHeader(),
+        );
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return BookingResponse.fromJson(data);
+      } else {
+        throw Exception('fail hogya: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('fetch eror: $e');
+      rethrow;
+    }
+  }
+
+  static Future<ParkingSlot> fetchParkingSlot(int slotId) async {
+    try {
+      final response = await protectedApiCall(() async {
+        return await http.get(
+          Uri.parse('$baseUrl/reservation/parking-slots/$slotId'),
+          headers: await getAuthHeader(),
+        );
+      });
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return ParkingSlot.fromJson(data);
+      } else {
+        throw Exception('fail hogya: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('fetch eror: $e');
+      rethrow;
+    }
+  }
+
+  static Future<ParkingArea> fetchParkingArea(int areaId) async {
+    try {
+      final response = await protectedApiCall(() async {
+        return await http.get(
+          Uri.parse('$baseUrl/reservation/parking-area/$areaId'),
+          headers: await getAuthHeader(),
+        );
+      });
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return ParkingArea.fromJson(data);
+      } else {
+        throw Exception('fail hogya: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('fetch eror: $e');
+      rethrow;
     }
   }
 }

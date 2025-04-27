@@ -341,7 +341,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                 : ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
-                  context,
+                  context,  
                   MaterialPageRoute(
                       builder: (context) => const LoginScreen()),
                 ).then((_) => setState(() {}));
@@ -372,104 +372,29 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Map Section
             Container(
-              height: 300,
+              height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: _locationError
-                      ? const AssetImage('assets/map.jpeg')
-                      : NetworkImage(
-                      'https://maps.googleapis.com/maps/api/staticmap?center=${_userPosition?.latitude},${_userPosition?.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${_userPosition?.latitude},${_userPosition?.longitude}&key=YOUR_API_KEY')
-                  as ImageProvider,
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.deepPurple.shade100,
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Your location',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: const BoxDecoration(
-                                  color: Colors.cyan,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.location_on,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _locationName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.location_on, size: 48, color: Colors.deepPurple),
+                  const SizedBox(height: 16),
+                  Text(
+                    _locationError ? 'Location unavailable' : _locationName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        "Let's find the best\nParking Space",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Container(
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            icon: Icon(Icons.search),
-                            hintText: 'Search for parking spots...',
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             // Parking Spots Section
@@ -555,7 +480,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BookingHistoryPage(bookings: []),
+                builder: (context) => const BookingHistoryPage(),
               ),
             );
           }
