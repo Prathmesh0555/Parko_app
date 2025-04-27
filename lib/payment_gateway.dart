@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'booking_confirmation.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'auth_service.dart';
 
 class PaymentGatewayPage extends StatefulWidget {
   final double fare;
@@ -9,6 +12,7 @@ class PaymentGatewayPage extends StatefulWidget {
   final String selectedSlot;
   final TimeOfDay startTime;
   final TimeOfDay endTime;
+  final int parkingAreaId;
 
   const PaymentGatewayPage({
     Key? key,
@@ -18,6 +22,7 @@ class PaymentGatewayPage extends StatefulWidget {
     required this.selectedSlot,
     required this.startTime,
     required this.endTime,
+    required this.parkingAreaId,
   }) : super(key: key);
 
   @override
@@ -25,19 +30,187 @@ class PaymentGatewayPage extends StatefulWidget {
 }
 
 class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
+  // Existing fields
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController(); // Add phone controller
+  
   String _selectedPaymentMethod = 'Credit Card';
-  late double _totalAmount;
+  bool _isMakingPayment = false;
+  String _errorMessage = '';
+  double _totalAmount = 0;
 
+  // Add loading state
+  bool _isCreatingBooking = false;
+  
   @override
   void initState() {
     super.initState();
-    _totalAmount = widget.fare * 1.18; // Including 18% tax
+    _calculateTotalAmount();
+    
+    // Prefill the phone controller with +91 prefix
+    _phoneController.text = '+91';
   }
+  
+  void _calculateTotalAmount() {
+    // Calculate the total based on fare and any additional fees
+    setState(() {
+      _totalAmount = widget.fare + (widget.fare * 0.05); // 5% service fee
+    });
+  }
+
+  // Update the _createBooking method with better error logging and handling
+
+  Future<void> _createBooking() async {
+    if (_phoneController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your phone number')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isCreatingBooking = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // Format times as HH:MM:SS
+      String formatTimeOfDay(TimeOfDay time) {
+        final hour = time.hour.toString().padLeft(2, '0');
+        final minute = time.minute.toString().padLeft(2, '0');
+        return '$hour:$minute:00';
+      }
+
+      final startTimeStr = formatTimeOfDay(widget.startTime);
+      final endTimeStr = formatTimeOfDay(widget.endTime);
+
+      // Ensure phone number has +91 prefix
+      String phoneNumber = _phoneController.text.trim();
+      if (!phoneNumber.startsWith('+91')) {
+        // If phone number doesn't start with +91, add it
+        if (phoneNumber.startsWith('91')) {
+          phoneNumber = '+$phoneNumber';
+        } else if (phoneNumber.startsWith('0')) {
+          phoneNumber = '+91${phoneNumber.substring(1)}';
+        } else {
+          phoneNumber = '+91$phoneNumber';
+        }
+      }
+
+      // Create payload in the exact format specified
+      final payload = {
+        "slot": int.parse(widget.selectedSlot),
+        "req_time_start": startTimeStr,
+        "req_time_end": endTimeStr,
+        "phone_number": phoneNumber
+      };
+      print("Sending booking request with payload: $payload");
+      
+      // Send booking request
+      final response = await AuthService.protectedApiCall(() async {
+        return await http.post(
+          Uri.parse('${AuthService.baseUrl}/reservation/booking/'),
+          headers: {
+            ...await AuthService.getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(payload),
+        );
+      });
+
+      print("Booking response status: ${response.statusCode}");
+      print("Booking response body: ${response.body}");
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        // Booking successful
+        final bookingData = jsonDecode(response.body);
+        print("Booking data: $bookingData");
+        final bookingId = bookingData['booking_id']?.toString() ?? '';
+        
+        if (bookingId.isEmpty) {
+          throw Exception("Booking ID not found in response");
+        }
+        
+        print("Fetching details for booking ID: $bookingId");
+        // Fetch the booking details to get the QR code
+        final bookingDetailsResponse = await AuthService.protectedApiCall(() async {
+          return await http.get(
+            Uri.parse('${AuthService.baseUrl}/reservation/booking/$bookingId'),
+            headers: await AuthService.getAuthHeader(),
+          );
+        });
+        
+        print("Booking details response status: ${bookingDetailsResponse.statusCode}");
+        print("Booking details response body: ${bookingDetailsResponse.body}");
+        
+        setState(() {
+          _isCreatingBooking = false;
+        });
+        
+        if (bookingDetailsResponse.statusCode == 200) {
+          final bookingDetails = jsonDecode(bookingDetailsResponse.body);
+          final qrCodeUrl = bookingDetails['qr_code']?.toString() ?? '';
+          print("QR Code URL: $qrCodeUrl");
+          
+          try {
+            // Navigate to confirmation page
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingConfirmationPage(
+                  parkingSpotName: widget.parkingSpotName,
+                  selectedDate: widget.selectedDate,
+                  selectedSlot: widget.selectedSlot,
+                  startTimeStr: formatTimeOfDay(widget.startTime),
+                  endTimeStr: formatTimeOfDay(widget.endTime),
+                  bookingId: bookingId,
+                  totalAmount: _totalAmount,
+                  paymentMethod: _selectedPaymentMethod,
+                  qrCode: qrCodeUrl,
+                  transactionId: bookingDetails['transaction_id']?.toString() ?? 'Unknown',
+                  bookingTime: DateTime.now().toString(),
+                ),
+              ),
+            );
+          } catch (e) {
+            print("Error navigating to confirmation page: $e");
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Booking successful but unable to show confirmation: $e')),
+            );
+          }
+        } else {
+          throw Exception("Failed to fetch booking details: ${bookingDetailsResponse.statusCode}");
+        }
+      } else {
+        // Failed - show error message
+        setState(() {
+          _isCreatingBooking = false;
+        });
+        
+        final responseData = jsonDecode(response.body);
+        final errorMessage = responseData['detail'] ?? 'Booking failed: ${response.statusCode}';
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      }
+    } catch (e) {
+      print("Error in booking process: $e");
+      setState(() {
+        _isCreatingBooking = false;
+        _errorMessage = 'Error creating booking: $e';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    }
+  }
+
+  // Update submitPayment to call createBooking
 
   @override
   void dispose() {
@@ -45,6 +218,7 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
+    _phoneController.dispose(); // Dispose the phone controller
     super.dispose();
   }
 
@@ -199,6 +373,28 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
                 ),
                 const SizedBox(height: 16),
               ],
+              // Phone number field section (outside of the payment method condition)
+              const SizedBox(height: 24),
+              const Text(
+                'Contact Information',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
+                  hintText: '+918828600128',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (value) => value?.isEmpty ?? true ? 'Phone number is required' : null,
+              ),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -209,15 +405,24 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: _submitPayment,
-                  child: const Text(
-                    'Confirm Payment',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  onPressed: _isCreatingBooking ? null : _submitPayment,
+                  child: _isCreatingBooking
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Confirm Booking',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                 ),
               ),
             ],
@@ -290,32 +495,8 @@ class _PaymentGatewayPageState extends State<PaymentGatewayPage> {
       return;
     }
 
-    final booking = {
-      'parkingSpotName': widget.parkingSpotName,
-      'selectedDate': widget.selectedDate,
-      'selectedSlot': widget.selectedSlot,
-      'totalAmount': _totalAmount,
-      'paymentMethod': _selectedPaymentMethod,
-      'transactionId': 'TXN${DateTime.now().millisecondsSinceEpoch}',
-      'bookingTime': '${widget.startTime.format(context)} - ${widget.endTime.format(context)}',
-      'status': 'Confirmed',
-      'bookingDateTime': DateTime.now().toIso8601String(),
-    };
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingConfirmationPage(
-          parkingSpotName: widget.parkingSpotName,
-          selectedDate: widget.selectedDate,
-          selectedSlot: widget.selectedSlot,
-          totalAmount: _totalAmount,
-          paymentMethod: _selectedPaymentMethod,
-          transactionId: booking['transactionId'] as String,
-          bookingTime: booking['bookingTime'] as String,
-        ),
-      ),
-    );
+    // Create the booking after payment info is validated
+    _createBooking();
   }
 }
 

@@ -7,8 +7,12 @@ class BookingConfirmationPage extends StatelessWidget {
   final String parkingSpotName;
   final String selectedDate;
   final String selectedSlot;
+  final String startTimeStr;  // Add this parameter
+  final String endTimeStr;    // Add this parameter
+  final String bookingId;     // Add this parameter
   final double totalAmount;
   final String paymentMethod;
+  final String qrCode;        // Add this parameter
   final String transactionId;
   final String bookingTime;
 
@@ -24,8 +28,12 @@ class BookingConfirmationPage extends StatelessWidget {
     required this.parkingSpotName,
     required this.selectedDate,
     required this.selectedSlot,
+    required this.startTimeStr,  // Add this parameter
+    required this.endTimeStr,    // Add this parameter
+    required this.bookingId,     // Add this parameter
     required this.totalAmount,
     required this.paymentMethod,
+    required this.qrCode,        // Add this parameter
     required this.transactionId,
     required this.bookingTime,
   });
@@ -106,22 +114,45 @@ class BookingConfirmationPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            QrImageView(
-              data: qrData,
-              version: QrVersions.auto,
-              size: 200,
-              gapless: false,
-              errorStateBuilder: (cxt, err) {
-                return const Center(
-                  child: Text(
-                    'Unable to generate QR code',
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              },
-              embeddedImage: const AssetImage('assets/logoParko.jpg'),
-              embeddedImageStyle: const QrEmbeddedImageStyle(
-                size: Size(40, 40),
+            // Display the image from URL
+            Container(
+              height: 200,
+              width: 200,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  qrCode,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / 
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error, color: Colors.red, size: 40),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Failed to load QR code',
+                          style: TextStyle(color: Colors.red[700]),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: paddingMedium),
@@ -152,7 +183,9 @@ class BookingConfirmationPage extends StatelessWidget {
         const SizedBox(height: paddingMedium),
         _buildDetailRow('Parking Spot', parkingSpotName),
         _buildDetailRow('Date', selectedDate),
-        _buildDetailRow('Time Slot', bookingTime),
+        _buildDetailRow('Start Time', startTimeStr),
+        _buildDetailRow('End Time', endTimeStr),
+        _buildDetailRow('Booking ID', bookingId),
         _buildDetailRow('Parking Slot', selectedSlot),
         _buildDetailRow('Payment Method', paymentMethod),
         _buildDetailRow('Transaction ID', transactionId),
@@ -256,6 +289,9 @@ class BookingConfirmationPage extends StatelessWidget {
       'parkingSpot': parkingSpotName,
       'date': selectedDate,
       'slot': selectedSlot,
+      'startTime': startTimeStr,
+      'endTime': endTimeStr,
+      'bookingId': bookingId,
       'time': bookingTime,
       'amount': totalAmount.toStringAsFixed(2),
       'transactionId': transactionId,
