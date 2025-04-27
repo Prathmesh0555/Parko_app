@@ -7,6 +7,7 @@ import 'detail.dart';
 import 'booking_history.dart';
 import 'login_screen.dart';
 import 'dart:convert';
+import 'profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -638,7 +639,14 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BookingHistoryPage(),
+                builder: (context) => const BookingHistoryPage(),
+              ),
+            );
+          } else if (index == 3) { // Profile tab
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfilePage(),
               ),
             );
           }
