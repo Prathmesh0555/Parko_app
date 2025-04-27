@@ -130,6 +130,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
   Future<void> _fetchNearbyParkingSpots() async {
     if (_userPosition == null) return;
     try {
+      print('Fetching parking spots...');
       final response = await AuthService.protectedApiCall(() async {
         return await http.get(
           Uri.parse(
@@ -137,27 +138,107 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           ),
           headers: {
             ...await AuthService.getAuthHeader(),
+            'ngrok-skip-browser-warning': 'true'
           },
         );
       });
 
+      print('API response status: ${response.statusCode}');
+      print('API response body: ${response.body}');
+      
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
-        setState(() {
-          _allParkingSpots =
-              data.map((json) => ParkingSpot.fromJson(json)).toList();
-          _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
-        });
+        print('API decoded data length: ${data.length}');
+        
+        if (data.isNotEmpty) {
+          try {
+            // Get dummy data to fill in missing fields
+            final dummySpots = _getDummyParkingSpots();
+            
+            // Create the list outside setState to debug
+            final spots = data.map((json) {
+              try {
+                return ParkingSpot.fromJson(json, dummySpots);
+              } catch (e) {
+                print('Error parsing individual spot: $e');
+                // Find a matching dummy spot if possible
+                final dummySpot = _findMatchingDummySpot(json, dummySpots);
+                if (dummySpot != null) {
+                  return dummySpot;
+                }
+                // If no match found, rethrow to use all dummy data
+                throw e;
+              }
+            }).toList();
+            
+            print('Parsed parking spots count: ${spots.length}');
+            
+            // Check the first spot if available
+            if (spots.isNotEmpty) {
+              print('First spot name: ${spots[0].parkingUser.parkingName}');
+            }
+            
+            setState(() {
+              _allParkingSpots = spots;
+              _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
+              print('State updated with ${_parkingSpots.length} spots out of ${_allParkingSpots.length} total');
+            });
+          } catch (e) {
+            print('Error parsing API data: $e');
+            setState(() {
+              _allParkingSpots = _getDummyParkingSpots();
+              _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
+            });
+          }
+        } else {
+          print('API returned empty data array');
+          setState(() {
+            _allParkingSpots = _getDummyParkingSpots();
+            _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
+          });
+        }
       } else {
-        throw Exception('Failed to load parking spots');
+        print('API error status code: ${response.statusCode}');
+        throw Exception('Failed to load parking spots: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('API error: $e');
+      print('API exception caught: $e');
       setState(() {
         _allParkingSpots = _getDummyParkingSpots();
         _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
       });
     }
+    
+    // This print statement runs too early - it doesn't give setState time to complete
+    // Move it after a brief delay to accurately check state
+    Future.delayed(const Duration(milliseconds: 100), () {
+      print('Delayed check - API resp: ${_parkingSpots.isNotEmpty ? _parkingSpots[0].parkingUser.parkingName : "No spots"}');
+    });
+  }
+
+  // Find a matching dummy spot based on id or name
+  ParkingSpot? _findMatchingDummySpot(Map<String, dynamic> apiSpot, List<ParkingSpot> dummySpots) {
+    // Try to match by ID first
+    if (apiSpot.containsKey('id')) {
+      final id = apiSpot['id'];
+      final matchById = dummySpots.where((spot) => spot.id == id).toList();
+      if (matchById.isNotEmpty) return matchById.first;
+    }
+    
+    // Try to match by parking name if available
+    if (apiSpot.containsKey('parking_user') && 
+        apiSpot['parking_user'] is Map<String, dynamic> &&
+        apiSpot['parking_user'].containsKey('parking_name')) {
+      final name = apiSpot['parking_user']['parking_name'];
+      final matchByName = dummySpots.where(
+        (spot) => spot.parkingUser.parkingName.toLowerCase().contains(
+          name.toString().toLowerCase()
+        )
+      ).toList();
+      if (matchByName.isNotEmpty) return matchByName.first;
+    }
+    
+    return null;
   }
 
   List<ParkingSpot> _getDummyParkingSpots() {
@@ -380,8 +461,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                 image: DecorationImage(
                   image: _locationError
                       ? const AssetImage('assets/map.jpeg')
-                      : NetworkImage(
-                      'https://maps.googleapis.com/maps/api/staticmap?center=${_userPosition?.latitude},${_userPosition?.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${_userPosition?.latitude},${_userPosition?.longitude}&key=YOUR_API_KEY')
+                      : const AssetImage('assets/map.jpeg')
                   as ImageProvider,
                   fit: BoxFit.cover,
                 ),
@@ -507,12 +587,15 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                     onPressed: () {
                       setState(() {
                         _displayLimit += 3;
-                        if (_displayLimit > _allParkingSpots.length) {
-                          _displayLimit = _allParkingSpots.length;
-                        }
                         _parkingSpots = _allParkingSpots
+                            .where((spot) => _searchController.text.isEmpty || 
+                                  spot.parkingUser.parkingName
+                                      .toLowerCase()
+                                      .contains(_searchController.text.toLowerCase()))
                             .take(_displayLimit)
                             .toList();
+                        
+                        print('View More clicked: now showing ${_parkingSpots.length} of ${_allParkingSpots.length} spots');
                       });
                     },
                     style: ElevatedButton.styleFrom(
@@ -530,11 +613,11 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: Colors.black54,
+                            color: Colors.white,
                           ),
                         ),
                         SizedBox(width: 8),
-                        Icon(Icons.arrow_forward),
+                        Icon(Icons.arrow_forward, color: Colors.white),
                       ],
                     ),
                   ),
@@ -754,14 +837,30 @@ class ParkingSpot {
     required this.parkingUser,
   });
 
-  factory ParkingSpot.fromJson(Map<String, dynamic> json) => ParkingSpot(
-    id: json['id'] as int,
-    latitude: (json['latitude'] as num).toDouble(),
-    longitude: (json['longitude'] as num).toDouble(),
-    availableSlots: json['available_slots'] as int,
-    distance: (json['distance'] as num).toDouble(),
-    parkingUser: ParkingUser.fromJson(json['parking_user']),
-  );
+  factory ParkingSpot.fromJson(Map<String, dynamic> json, [List<ParkingSpot>? dummySpots]) {
+    // Try to find matching dummy spot for fallback values
+    ParkingSpot? dummySpot;
+    if (dummySpots != null) {
+      for (var spot in dummySpots) {
+        if (spot.id == json['id']) {
+          dummySpot = spot;
+          break;
+        }
+      }
+    }
+    
+    return ParkingSpot(
+      id: json['id'] as int,
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
+      availableSlots: json['available_slots'] as int,
+      distance: (json['distance'] as num).toDouble(),
+      parkingUser: ParkingUser.fromJson(
+        json['parking_user'], 
+        dummySpot?.parkingUser
+      ),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -776,7 +875,7 @@ class ParkingSpot {
 class ParkingUser {
   final int id;
   final String name;
-  final String phone;
+  final String? phone; // Make phone nullable
   final String email;
   final String parkingName;
   final String address;
@@ -791,7 +890,7 @@ class ParkingUser {
   ParkingUser({
     required this.id,
     required this.name,
-    required this.phone,
+    this.phone,        // Optional parameter
     required this.email,
     required this.parkingName,
     required this.address,
@@ -804,21 +903,45 @@ class ParkingUser {
     required this.availableTypes,
   });
 
-  factory ParkingUser.fromJson(Map<String, dynamic> json) => ParkingUser(
-    id: json['id'] as int,
-    name: json['name'] as String,
-    phone: json['phone'] as String,
-    email: json['email'] as String,
-    parkingName: json['parking_name'] as String,
-    address: json['address'] as String,
-    hourlyRate: (json['hourlyRate'] as num).toDouble(),
-    openingHours: json['openingHours'] as String,
-    dailyRate: (json['dailyRate'] as num).toDouble(),
-    monthlyRate: (json['monthlyRate'] as num).toDouble(),
-    rating: (json['rating'] as num).toDouble(),
-    imageUrl: json['image_url'] as String,
-    availableTypes: json['availableTypes'] as String,
-  );
+  factory ParkingUser.fromJson(Map<String, dynamic> json, [ParkingUser? fallback]) {
+    // Check if availableTypes is empty or missing
+    final String availableTypesValue = json.containsKey('availableTypes') 
+        ? (json['availableTypes'] as String? ?? '') 
+        : '';
+        
+    // Use fallback data if availableTypes is empty
+    final String finalAvailableTypes = (availableTypesValue.isEmpty && fallback != null) 
+        ? fallback.availableTypes 
+        : availableTypesValue;
+        
+    return ParkingUser(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      phone: json['phone'] as String?,
+      email: json['email'] as String,
+      parkingName: json['parking_name'] as String,
+      address: json['address'] as String,
+      hourlyRate: fallback != null && !json.containsKey('hourlyRate') 
+          ? fallback.hourlyRate 
+          : (json['hourlyRate'] as num).toDouble(),
+      openingHours: fallback != null && !json.containsKey('openingHours') 
+          ? fallback.openingHours 
+          : json['openingHours'] as String,
+      dailyRate: fallback != null && !json.containsKey('dailyRate') 
+          ? fallback.dailyRate 
+          : (json['dailyRate'] as num).toDouble(),
+      monthlyRate: fallback != null && !json.containsKey('monthlyRate') 
+          ? fallback.monthlyRate 
+          : (json['monthlyRate'] as num).toDouble(),
+      rating: fallback != null && !json.containsKey('rating') 
+          ? fallback.rating 
+          : (json['rating'] as num).toDouble(),
+      imageUrl: fallback != null && !json.containsKey('image_url') 
+          ? fallback.imageUrl 
+          : json['image_url'] as String,
+      availableTypes: finalAvailableTypes,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,

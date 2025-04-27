@@ -4,7 +4,8 @@ import 'parking_lot_availability.dart';
 class ParkingDetailPage extends StatefulWidget {
   final Map<String, dynamic> parkingSpot;
 
-  const ParkingDetailPage({Key? key, required this.parkingSpot}) : super(key: key);
+  const ParkingDetailPage({Key? key, required this.parkingSpot})
+    : super(key: key);
 
   @override
   _ParkingDetailPageState createState() => _ParkingDetailPageState();
@@ -90,13 +91,13 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
       // If no start time selected, default to current time + 2 hours
       final now = TimeOfDay.now();
       initialTime = TimeOfDay(
-        hour: (now.hour + 2) % 24,  // Ensure hour stays within 0-23
+        hour: (now.hour + 2) % 24, // Ensure hour stays within 0-23
         minute: now.minute,
       );
     } else {
       // If start time is selected, use it + 2 hours
       initialTime = TimeOfDay(
-        hour: (_startTime!.hour + 2) % 24,  // Ensure hour stays within 0-23
+        hour: (_startTime!.hour + 2) % 24, // Ensure hour stays within 0-23
         minute: _startTime!.minute,
       );
     }
@@ -118,15 +119,18 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
     if (_startTime != null && _endTime != null) {
       // Ensure end time is after start time
       if (_endTime!.hour < _startTime!.hour ||
-          (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
+          (_endTime!.hour == _startTime!.hour &&
+              _endTime!.minute <= _startTime!.minute)) {
         // If end time is before start time, add 24 hours to end time
-        final duration = ((_endTime!.hour + 24) - _startTime!.hour) +
+        final duration =
+            ((_endTime!.hour + 24) - _startTime!.hour) +
             (_endTime!.minute - _startTime!.minute) / 60;
         setState(() {
           _totalFare = (duration * 100).roundToDouble();
         });
       } else {
-        final duration = (_endTime!.hour - _startTime!.hour) +
+        final duration =
+            (_endTime!.hour - _startTime!.hour) +
             (_endTime!.minute - _startTime!.minute) / 60;
         setState(() {
           _totalFare = (duration * 100).roundToDouble();
@@ -149,7 +153,8 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
 
     // Ensure end time is after start time
     if (_endTime!.hour < _startTime!.hour ||
-        (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
+        (_endTime!.hour == _startTime!.hour &&
+            _endTime!.minute <= _startTime!.minute)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('End time must be after start time')),
       );
@@ -159,14 +164,17 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ParkingLotAvailabilityPage(
-          selectedDate: '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-          parkingSpotName: widget.parkingSpot['parking_user']['parking_name'],
-          initialSelectedSpot: selectedSlot,
-          fare: _totalFare,
-          startTime: _startTime!,
-          endTime: _endTime!,
-        ),
+        builder:
+            (context) => ParkingLotAvailabilityPage(
+              selectedDate:
+                  '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+              parkingSpotName:
+                  widget.parkingSpot['parking_user']['parking_name'],
+              initialSelectedSpot: selectedSlot,
+              fare: _totalFare,
+              startTime: _startTime!,
+              endTime: _endTime!,
+            ),
       ),
     ).then((selectedSpot) {
       if (selectedSpot != null && selectedSpot is String) {
@@ -179,6 +187,22 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
   Widget build(BuildContext context) {
     final parkingUser = widget.parkingSpot['parking_user'];
 
+    // Default values for missing fields
+    final String description =
+        parkingUser['description'] ??
+        'Secure, well-maintained parking facility with 24/7 surveillance and easy access. '
+            'Our spacious parking offers convenient spots for various vehicle types, with '
+            'professional staff always available to assist you.';
+
+    final String vehicleTypes =
+        parkingUser['availableTypes'] != null &&
+                parkingUser['availableTypes'].toString().isNotEmpty
+            ? parkingUser['availableTypes']
+            : 'Compact, SUV, Sedan, Bike';
+
+    final String phone = parkingUser['phone'] ?? '+91 9876543210';
+    final String email = parkingUser['email'] ?? 'contact@parko.com';
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -187,48 +211,9 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            Container(
-              height: 40,
-              width: 40,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/logoParko.jpg'),
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              parkingUser['parking_name'],
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.deepPurple),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: TextButton(
-              onPressed: () {},
-              child: const Text(
-                'Log In',
-                style: TextStyle(
-                  color: Colors.deepPurple,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+        title: null,
+        centerTitle: false,
+        actions: [],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -272,10 +257,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                   const SizedBox(height: 12),
                   Text(
                     parkingUser['address'] ?? 'No address provided',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -284,18 +266,186 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                       _buildInfoCard(
                         icon: Icons.access_time,
                         title: 'Opening Hours',
-                        value: parkingUser['openingHours'] ?? 'N/A',
+                        value: parkingUser['openingHours'] ?? '24/7',
                       ),
                       _buildInfoCard(
                         icon: Icons.local_parking,
                         title: 'Vehicle Types',
-                        value: parkingUser['availableTypes'] ?? 'N/A',
+                        value: vehicleTypes,
                       ),
                     ],
                   ),
                 ],
               ),
             ),
+
+            // Price Information Box
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Parking Rates',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hourly',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${parkingUser['hourlyRate'] ?? '60'}/hr',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Daily',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${parkingUser['dailyRate'] ?? '500'}/day',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Monthly',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${parkingUser['monthlyRate'] ?? '5000'}/mo',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Contact Information Box
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Contact Information',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.phone, color: Colors.grey, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          parkingUser['phone'] ?? phone,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.email_outlined,
+                          color: Colors.grey,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          parkingUser['email'],
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
 
             // Description Section
             const Padding(
@@ -309,32 +459,15 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                 children: [
                   const Text(
                     'Description',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    parkingUser['description'] ?? 'No description provided.',
+                    description,
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.threed_rotation, color: Colors.deepPurple),
-                      label: const Text(
-                        'View 3D Model',
-                        style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      height: 1.4,
                     ),
                   ),
                 ],
@@ -383,7 +516,10 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                     GestureDetector(
                       onTap: _selectDate,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey[300]!),
                           borderRadius: BorderRadius.circular(8),
@@ -416,9 +552,14 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                               GestureDetector(
                                 onTap: _selectStartTime,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 16,
+                                  ),
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey[300]!),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -448,9 +589,14 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                               GestureDetector(
                                 onTap: _selectEndTime,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 16,
+                                  ),
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey[300]!),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -482,9 +628,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                           ),
                         ),
                         Text(
-                          _totalFare > 0
-                              ? 'Total: ₹$_totalFare'
-                              : 'Total: ₹--',
+                          _totalFare > 0 ? 'Total: ₹$_totalFare' : 'Total: ₹--',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -523,10 +667,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                     const Center(
                       child: Text(
                         'Free cancellation up to 24h before arrival',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ),
                   ],
@@ -536,7 +677,10 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
 
             // Reviews Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -545,7 +689,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -579,7 +723,9 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                                   });
                                 },
                                 child: Icon(
-                                  index < rating ? Icons.star : Icons.star_border,
+                                  index < rating
+                                      ? Icons.star
+                                      : Icons.star_border,
                                   size: 32,
                                   color: Colors.amber,
                                 ),
@@ -601,7 +747,8 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                             alignment: Alignment.centerRight,
                             child: ElevatedButton(
                               onPressed: () {
-                                if (reviewController.text.isNotEmpty && rating > 0) {
+                                if (reviewController.text.isNotEmpty &&
+                                    rating > 0) {
                                   setState(() {
                                     reviews.insert(0, {
                                       'name': 'You',
@@ -618,7 +765,9 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepPurple,
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
                               ),
                               child: const Text(
                                 'Submit Review',
@@ -635,75 +784,85 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                   // Existing Reviews
                   const Text(
                     'Customer Reviews',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   Column(
-                    children: reviews.map((review) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                    children:
+                        reviews.map((review) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: Colors.deepPurple,
-                                      child: Text(
-                                        review['initials'],
-                                        style: const TextStyle(color: Colors.white),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            review['name'],
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: Colors.black12,
+                                          child: Text(
+                                            review['initials'],
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
+                                              color: Colors.white,
+                                            ),
                                           ),
-                                          Row(
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              const Icon(Icons.star, color: Colors.amber, size: 16),
-                                              const SizedBox(width: 4),
                                               Text(
-                                                '${review['rating']} • ${review['date']}',
-                                                style: TextStyle(
-                                                    color: Colors.grey[600],
-                                                    fontSize: 14),
+                                                review['name'],
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.star,
+                                                    color: Colors.amber,
+                                                    size: 16,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${review['rating']} • ${review['date']}',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
-                                        ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      review['comment'],
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  review['comment'],
-                                  style: const TextStyle(fontSize: 14, height: 1.5),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                          );
+                        }).toList(),
                   ),
                 ],
               ),
@@ -718,10 +877,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
         showSelectedLabels: false,
         showUnselectedLabels: false,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.access_time),
             label: 'History',
@@ -760,20 +916,14 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),
