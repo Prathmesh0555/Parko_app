@@ -22,7 +22,10 @@ class ParkoApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Parko',
-      theme: ThemeData(primarySwatch: Colors.deepPurple, fontFamily: 'Roboto'),
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        fontFamily: 'Roboto',
+      ),
       home: const ParkoHomePage(),
     );
   }
@@ -44,7 +47,6 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
   List<ParkingSpot> _allParkingSpots = [];
   int _displayLimit = 3;
   String _locationName = "Fetching location...";
-  bool _isLocationExpanded = false; // Add state for location expansion
 
   @override
   void initState() {
@@ -119,7 +121,9 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           Uri.parse(
             '${AuthService.baseUrl}/reservation/parking-area/nearby/?user-lat=${_userPosition!.latitude}&user-long=${_userPosition!.longitude}',
           ),
-          headers: {...await AuthService.getAuthHeader()},
+          headers: {
+            ...await AuthService.getAuthHeader(),
+          },
         );
       });
 
@@ -163,7 +167,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           monthlyRate: 5000,
           rating: 4.2,
           imageUrl:
-              "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
+          "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
           availableTypes: "Compact,SUV,Bike",
         ),
       ),
@@ -186,7 +190,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           monthlyRate: 6000,
           rating: 4.5,
           imageUrl:
-              "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
+          "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
           availableTypes: "Compact,SUV",
         ),
       ),
@@ -209,7 +213,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           monthlyRate: 7000,
           rating: 4.8,
           imageUrl:
-              "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
+          "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
           availableTypes: "SUV",
         ),
       ),
@@ -232,7 +236,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           monthlyRate: 8000,
           rating: 4.9,
           imageUrl:
-              "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
+          "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
           availableTypes: "Compact",
         ),
       ),
@@ -255,20 +259,11 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           monthlyRate: 9000,
           rating: 4.7,
           imageUrl:
-              "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
+          "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
           availableTypes: "SUV,Bike",
         ),
       ),
     ];
-  }
-
-  String _getTruncatedLocation() {
-    if (_locationName.isEmpty) return "Current Location";
-
-    final words = _locationName.split(' ');
-    if (words.length <= 2) return _locationName;
-
-    return "${words.take(2).join(' ')}...";
   }
 
   @override
@@ -307,282 +302,226 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
-            child:
-                AuthService.isLoggedIn
-                    ? PopupMenuButton(
-                      icon: const Icon(Icons.person, color: Colors.deepPurple),
-                      onSelected: (value) {
-                        if (value == 'logout') {
-                          AuthService.logout();
-                          setState(() {});
-                        }
-                      },
-                      itemBuilder:
-                          (BuildContext context) => [
-                            const PopupMenuItem(
-                              value: 'logout',
-                              child: Text('Logout'),
-                            ),
-                          ],
-                    )
-                    : ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                        ).then((_) => setState(() {}));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      icon: const Icon(
-                        Icons.login,
-                        size: 20,
-                        color: Colors.deepPurple,
-                      ),
-                      label: const Text(
-                        'Login',
-                        style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+            child: AuthService.isLoggedIn
+                ? PopupMenuButton(
+              icon: const Icon(Icons.person, color: Colors.deepPurple),
+              onSelected: (value) {
+                if (value == 'logout') {
+                  AuthService.logout();
+                  setState(() {});
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Text('Logout'),
+                ),
+              ],
+            )
+                : ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const LoginScreen()),
+                ).then((_) => setState(() {}));
+              },
+              style: ElevatedButton.styleFrom(
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+              ),
+              icon: const Icon(Icons.login,
+                  size: 20, color: Colors.deepPurple),
+              label: const Text(
+                'Login',
+                style: TextStyle(
+                  color: Colors.deepPurple,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Map Section
+            Container(
+              height: 300,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: _locationError
+                      ? const AssetImage('assets/map.jpeg')
+                      : NetworkImage(
+                      'https://maps.googleapis.com/maps/api/staticmap?center=${_userPosition?.latitude},${_userPosition?.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${_userPosition?.latitude},${_userPosition?.longitude}&key=YOUR_API_KEY')
+                  as ImageProvider,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Map Section
-                    Container(
-                      height: 300,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image:
-                              _locationError
-                                  ? const AssetImage('assets/map.jpeg')
-                                  : NetworkImage(
-                                        'https://maps.googleapis.com/maps/api/staticmap?center=${_userPosition?.latitude},${_userPosition?.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${_userPosition?.latitude},${_userPosition?.longitude}&key=YOUR_API_KEY',
-                                      )
-                                      as ImageProvider,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: Container(
-                        color: Colors.black.withOpacity(0.3),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Your location',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _isLocationExpanded =
-                                            !_isLocationExpanded;
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.3),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.cyan,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.location_on,
-                                              color: Colors.white,
-                                              size: 16,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: AnimatedCrossFade(
-                                              firstChild: Text(
-                                                _getTruncatedLocation(),
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              secondChild: Text(
-                                                _locationName,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              crossFadeState:
-                                                  _isLocationExpanded
-                                                      ? CrossFadeState
-                                                          .showSecond
-                                                      : CrossFadeState
-                                                          .showFirst,
-                                              duration: const Duration(
-                                                milliseconds: 300,
-                                              ),
-                                            ),
-                                          ),
-                                          AnimatedRotation(
-                                            turns:
-                                                _isLocationExpanded ? 0.5 : 0,
-                                            duration: const Duration(
-                                              milliseconds: 300,
-                                            ),
-                                            child: const Icon(
-                                              Icons.keyboard_arrow_down,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.0),
-                              child: Text(
-                                "Let's find the best\nParking Space",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: const TextField(
-                                  decoration: InputDecoration(
-                                    icon: Icon(Icons.search),
-                                    hintText: 'Search for parking spots...',
-                                    border: InputBorder.none,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Parking Spots Section
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Nearby Parking Spots',
+                          const Text(
+                            'Your location',
                             style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 16,
                             ),
                           ),
-                          Text(
-                            'The best parking space near you',
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: Colors.cyan,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _locationName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.white,
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    ..._parkingSpots
-                        .map((spot) => ParkingSpotCard(spot: spot))
-                        .toList(),
-                    if (_allParkingSpots.length > _displayLimit)
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _displayLimit += 3;
-                                if (_displayLimit > _allParkingSpots.length) {
-                                  _displayLimit = _allParkingSpots.length;
-                                }
-                                _parkingSpots =
-                                    _allParkingSpots
-                                        .take(_displayLimit)
-                                        .toList();
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple[400],
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'View More',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward),
-                              ],
-                            ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        "Let's find the best\nParking Space",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Container(
+                        padding:
+                        const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const TextField(
+                          decoration: InputDecoration(
+                            icon: Icon(Icons.search),
+                            hintText: 'Search for parking spots...',
+                            border: InputBorder.none,
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
+            ),
+            // Parking Spots Section
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Nearby Parking Spots',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'The best parking space near you',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ..._parkingSpots
+                .map((spot) => ParkingSpotCard(spot: spot))
+                .toList(),
+            if (_allParkingSpots.length > _displayLimit)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _displayLimit += 3;
+                        if (_displayLimit > _allParkingSpots.length) {
+                          _displayLimit = _allParkingSpots.length;
+                        }
+                        _parkingSpots = _allParkingSpots
+                            .take(_displayLimit)
+                            .toList();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple[400],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'View More',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.deepPurple,
@@ -602,7 +541,10 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           setState(() => _currentIndex = index);
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.access_time),
             label: 'History',
@@ -632,7 +574,8 @@ class ParkingSpotCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ParkingDetailPage(parkingSpot: spot.toJson()),
+            builder: (context) =>
+                ParkingDetailPage(parkingSpot: spot.toJson()),
           ),
         );
       },
@@ -675,33 +618,26 @@ class ParkingSpotCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Wrap(
-                          children:
-                              spot.parkingUser.availableTypes
-                                  .split(',')
-                                  .map(
-                                    (type) => Container(
-                                      margin: const EdgeInsets.only(
-                                        right: 8,
-                                        bottom: 4,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF2E9FE),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        type.trim(),
-                                        style: const TextStyle(
-                                          color: Colors.deepPurple,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
+                          children: spot.parkingUser.availableTypes
+                              .split(',')
+                              .map((type) => Container(
+                            margin: const EdgeInsets.only(
+                                right: 8, bottom: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF2E9FE),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              type.trim(),
+                              style: const TextStyle(
+                                color: Colors.deepPurple,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ))
+                              .toList(),
                         ),
                         const SizedBox(height: 8),
                         Text(
