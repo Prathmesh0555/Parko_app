@@ -884,6 +884,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Wrap(
                       spacing: 4,
@@ -919,6 +920,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       spot.address,
@@ -964,32 +967,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        RatingBar.builder(
-                          initialRating: spot.rating,
-                          minRating: 1,
-                          direction: Axis.horizontal,
-                          allowHalfRating: true,
-                          itemCount: 5,
-                          itemSize: 16,
-                          ignoreGestures: true,
-                          itemBuilder:
-                              (context, _) =>
-                                  const Icon(Icons.star, color: Colors.amber),
-                          onRatingUpdate: (rating) {},
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '(${spot.rating})',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
                         Text(
                           '₹${spot.hourlyRate.toInt()}/hr',
                           style: const TextStyle(
@@ -1017,26 +994,42 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.location_on,
-                            color: Colors.blue.shade700,
-                          ),
-                          onPressed: () => _centerOnSpot(spot),
-                          tooltip: 'View on Map',
-                          constraints: const BoxConstraints(),
-                          padding: const EdgeInsets.all(8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.location_on,
+                                color: Colors.blue.shade700,
+                                size: 20,
+                              ),
+                              onPressed: () => _centerOnSpot(spot),
+                              tooltip: 'View on Map',
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              padding: const EdgeInsets.all(6),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.directions,
+                                color: Colors.blue.shade700,
+                                size: 20,
+                              ),
+                              onPressed: () => _getDirections(spot),
+                              tooltip: 'Get Directions',
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              padding: const EdgeInsets.all(6),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.directions,
-                            color: Colors.blue.shade700,
-                          ),
-                          onPressed: () => _getDirections(spot),
-                          tooltip: 'Get Directions',
-                          constraints: const BoxConstraints(),
-                          padding: const EdgeInsets.all(8),
-                        ),
+                        const SizedBox(width: 4),
                         ElevatedButton(
                           onPressed: () {
                             Navigator.push(
@@ -1056,13 +1049,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                            minimumSize: const Size(40, 36),
+                            minimumSize: const Size(30, 32),
+                            visualDensity: VisualDensity.compact,
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text('Book'),
-                              Icon(Icons.arrow_forward, size: 16),
+                              SizedBox(width: 2),
+                              Icon(Icons.arrow_forward, size: 14),
                             ],
                           ),
                         ),

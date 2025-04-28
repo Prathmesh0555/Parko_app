@@ -527,11 +527,16 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                 height: 300,
                 width: double.infinity,
                 decoration: BoxDecoration(
+                  color: Colors.grey[200], // Move the color into the BoxDecoration
                   image: DecorationImage(
-                    image: _locationError
+                    image: _locationError || _userPosition == null
                         ? const AssetImage('assets/map.jpeg')
                         : NetworkImage(
-                            "https://maps.googleapis.com/maps/api/staticmap?center=${_userPosition?.latitude},${_userPosition?.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${_userPosition?.latitude},${_userPosition?.longitude}&key=${dotenv.get('GOOGLE_MAPS_API_KEY')}"
+                            "https://maps.googleapis.com/maps/api/staticmap?center=${_userPosition!.latitude},${_userPosition!.longitude}"
+                            "&zoom=15&size=400x300&scale=2" 
+                            "&maptype=roadmap"
+                            "&markers=color:red%7C${_userPosition!.latitude},${_userPosition!.longitude}"
+                            "&key=${dotenv.env['GOOGLE_MAPS_API_KEY'] ?? ''}",
                           ) as ImageProvider,
                     fit: BoxFit.cover,
                   ),
@@ -698,7 +703,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
         ],
       ),
     );
-    }
+  }
 }
 
 class ParkingSpotCard extends StatelessWidget {
