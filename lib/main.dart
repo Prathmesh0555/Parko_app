@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Add this import
 import 'auth_service.dart';
 import 'detail.dart';
 import 'BookingHistory/booking_history.dart';
 import 'login_screen.dart';
+import ' map_screen.dart';
 import 'dart:convert';
 import 'profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(); // Load .env file
   await AuthService.initialize();
   runApp(const ParkoApp());
 }
@@ -132,6 +135,10 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
     try {
       print('Fetching parking spots...');
       final response = await AuthService.protectedApiCall(() async {
+        debugPrint(
+          'Fetching parking spots from: ${AuthService.baseUrl}/reservation/parking-area/nearby/?user-lat=${_userPosition!.latitude}&user-long=${_userPosition!.longitude}',
+        );
+        debugPrint('Headers: ${await AuthService.getAuthHeader()}');
         return await http.get(
           Uri.parse(
             '${AuthService.baseUrl}/reservation/parking-area/nearby/?user-lat=${_userPosition!.latitude}&user-long=${_userPosition!.longitude}',
@@ -207,6 +214,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
     } catch (e) {
       print('API exception caught: $e');
       setState(() {
+        _locationError = true;
         _allParkingSpots = _getDummyParkingSpots();
         _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
       });
@@ -479,10 +487,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
             icon: Icon(Icons.access_time),
             label: 'My Bookings',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Calendar',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             label: 'Profile',
@@ -499,12 +504,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
       case 1:
         return const BookingHistoryPage();
       case 2:
-        return const Center(
-          child: Text(
-            'Calendar feature coming soon!',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-        );
+        return const MapScreen();
       case 3:
         return const ProfilePage();
       default:
@@ -521,80 +521,89 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 300,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image:
-                    _locationError
+          Stack(
+            children: [
+              Container(
+                height: 300,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: _locationError
                         ? const AssetImage('assets/map.jpeg')
-                        : const AssetImage('assets/map.jpeg') as ImageProvider,
-                fit: BoxFit.cover,
+                        : NetworkImage(
+                            "https://maps.googleapis.com/maps/api/staticmap?center=${_userPosition?.latitude},${_userPosition?.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${_userPosition?.latitude},${_userPosition?.longitude}&key=${dotenv.get('GOOGLE_MAPS_API_KEY')}"
+                          ) as ImageProvider,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-            ),
-            child: Container(
-              color: Colors.black.withOpacity(0.3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              // Dark overlay
+              Container(
+                height: 300,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                ),
+              ),
+              // Content on top of the overlay
+              Container(
+                height: 300,
+                width: double.infinity,
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your location',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
-                        const Text(
-                          'Your location',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Colors.cyan,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.location_on,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: Colors.cyan,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.location_on,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _locationName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Icon(
-                              Icons.keyboard_arrow_down,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _locationName,
+                            style: const TextStyle(
                               color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.white,
                         ),
                       ],
                     ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(
+                    const Spacer(),
+                    const Text(
                       "Let's find the best\nParking Space",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
+                        height: 1.2,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Container(
+                    const SizedBox(height: 20),
+                    Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -609,10 +618,11 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
           const Padding(
             padding: EdgeInsets.all(16.0),
@@ -621,11 +631,17 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
               children: [
                 Text(
                   'Nearby Parking Spots',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   'The best parking space near you',
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
@@ -640,19 +656,18 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                   onPressed: () {
                     setState(() {
                       _displayLimit += 3;
-                      _parkingSpots =
-                          _allParkingSpots
-                              .where(
-                                (spot) =>
-                                    _searchController.text.isEmpty ||
-                                    spot.parkingUser.parkingName
-                                        .toLowerCase()
-                                        .contains(
-                                          _searchController.text.toLowerCase(),
-                                        ),
-                              )
-                              .take(_displayLimit)
-                              .toList();
+                      _parkingSpots = _allParkingSpots
+                          .where(
+                            (spot) =>
+                                _searchController.text.isEmpty ||
+                                spot.parkingUser.parkingName
+                                    .toLowerCase()
+                                    .contains(
+                                      _searchController.text.toLowerCase(),
+                                    ),
+                          )
+                          .take(_displayLimit)
+                          .toList();
                     });
                   },
                   style: ElevatedButton.styleFrom(
@@ -683,7 +698,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
         ],
       ),
     );
-  }
+    }
 }
 
 class ParkingSpotCard extends StatelessWidget {
