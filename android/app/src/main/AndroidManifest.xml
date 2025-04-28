@@ -6,6 +6,9 @@
         android:label="parko"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBy87nV0DZL-ebT9XUpaXv1nFbUgATK9F4"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

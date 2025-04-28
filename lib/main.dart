@@ -6,6 +6,7 @@ import 'auth_service.dart';
 import 'detail.dart';
 import 'booking_history.dart';
 import 'login_screen.dart';
+import ' map_screen.dart'; // Add this import
 import 'dart:convert';
 
 void main() async {
@@ -60,9 +61,7 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _parkingSpots = _allParkingSpots
-          .where((spot) => spot.parkingUser.parkingName
-          .toLowerCase()
-          .contains(query))
+          .where((spot) => spot.parkingUser.parkingName.toLowerCase().contains(query))
           .take(_displayLimit)
           .toList();
     });
@@ -131,29 +130,32 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
     if (_userPosition == null) return;
     try {
       final response = await AuthService.protectedApiCall(() async {
+        debugPrint('Fetching parking spots from: ${AuthService.baseUrl}/reservation/parking-area/nearby/?user-lat=${_userPosition!.latitude}&user-long=${_userPosition!.longitude}');
+        debugPrint('Headers: ${await AuthService.getAuthHeader()}');
         return await http.get(
           Uri.parse(
             '${AuthService.baseUrl}/reservation/parking-area/nearby/?user-lat=${_userPosition!.latitude}&user-long=${_userPosition!.longitude}',
           ),
-          headers: {
-            ...await AuthService.getAuthHeader(),
-          },
+          headers: await AuthService.getAuthHeader(),
         );
       });
 
+      debugPrint('Response status code: ${response.statusCode}');
+      debugPrint('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          _allParkingSpots =
-              data.map((json) => ParkingSpot.fromJson(json)).toList();
+          _allParkingSpots = data.map((json) => ParkingSpot.fromJson(json)).toList();
           _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
         });
       } else {
-        throw Exception('Failed to load parking spots');
+        throw Exception('Failed to load parking spots: ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('API error: $e');
       setState(() {
+        _locationError = true;
         _allParkingSpots = _getDummyParkingSpots();
         _parkingSpots = _allParkingSpots.take(_displayLimit).toList();
       });
@@ -229,52 +231,6 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
           imageUrl:
           "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
           availableTypes: "SUV",
-        ),
-      ),
-      ParkingSpot(
-        id: 4,
-        latitude: 19.0790,
-        longitude: 72.8807,
-        availableSlots: 60,
-        distance: 5.5,
-        parkingUser: ParkingUser(
-          id: 4,
-          name: "Sarah Williams",
-          phone: "9876543213",
-          email: "sarah@example.com",
-          parkingName: "Turner Road Parking",
-          address: "Turner Road, Bandra West, Mumbai, Maharashtra 400050",
-          hourlyRate: 80,
-          openingHours: "11am-11pm",
-          dailyRate: 800,
-          monthlyRate: 8000,
-          rating: 4.9,
-          imageUrl:
-          "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
-          availableTypes: "Compact",
-        ),
-      ),
-      ParkingSpot(
-        id: 5,
-        latitude: 19.0800,
-        longitude: 72.8817,
-        availableSlots: 70,
-        distance: 6.5,
-        parkingUser: ParkingUser(
-          id: 5,
-          name: "Michael Brown",
-          phone: "9876543214",
-          email: "michael@example.com",
-          parkingName: "Waterfield Road Parking",
-          address: "Waterfield Road, Bandra West, Mumbai, Maharashtra 400050",
-          hourlyRate: 90,
-          openingHours: "12pm-12am",
-          dailyRate: 900,
-          monthlyRate: 9000,
-          rating: 4.7,
-          imageUrl:
-          "https://cdn11.bigcommerce.com/s-64cbb/product_images/uploaded_images/tgtechnicalservices-246300-parking-garage-safer-blogbanner1.jpg",
-          availableTypes: "SUV,Bike",
         ),
       ),
     ];
@@ -558,6 +514,13 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
                 builder: (context) => BookingHistoryPage(bookings: []),
               ),
             );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MapScreen(),
+              ),
+            );
           }
           setState(() => _currentIndex = index);
         },
@@ -571,8 +534,8 @@ class _ParkoHomePageState extends State<ParkoHomePage> {
             label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Calendar',
+            icon: Icon(Icons.map),
+            label: 'Map',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

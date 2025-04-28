@@ -205,25 +205,7 @@ class _ParkingDetailPageState extends State<ParkingDetailPage> {
             ),
           ],
         ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.deepPurple),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: TextButton(
-              onPressed: () {},
-              child: const Text(
-                'Log In',
-                style: TextStyle(
-                  color: Colors.deepPurple,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+
       ),
       body: SingleChildScrollView(
         child: Column(
